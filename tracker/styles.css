@@ -2,3 +2,33 @@
     max-height: 250px;
     overflow: scroll;
 }
+
+.Ominous {
+    color: gray;
+    font-style: bold;
+    background-color: lightcyan;
+}
+
+.Unintelligible {
+    color: black;
+    font-weight: bold;
+    background-color: pink;
+}
+
+.Poetic {
+    color: white;
+    font-weight: bold;
+    background-color: sandybrown;
+}
+
+div {
+    margin-bottom: 10px;
+ }
+
+ .form-label {
+    font-weight: bold;
+ }
+
+[v-cloak] {
+    display: none;
+}
