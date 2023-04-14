@@ -14,7 +14,7 @@
     <div id="app">
 
         <!-- TODO display the name of the activity -->
-        <h1 class="text-center">Time Tracker</h1>
+        <h1 class="text-center">{{activity}} Time Tracker</h1>
 
         <div id="add-hours" class="card">
 
@@ -22,54 +22,64 @@
             <div class="card-body">
                
                 <!-- TODO use v-if to show this if there are validation errors -->
-                <div class="alert alert-danger">
+                <div class="alert alert-danger" v-if="errors.length > 0">
                     <!-- TODO show a list of validation errors from form -->
+                    <ul>
+                        <li v-for="error in errors">{{error}}</li>
+                    </ul>
                 </div>
 
+                <!--TIED TO dateString FROM SCRIPT-->
                 <div class="form-group">
                     <!-- TODO display name of activity in the label -->
                     <label class="form-label" for="date">What date did you do this activity?</label>
                     <!-- TODO use v-model to connect this input to dateString data -->
-                    <input id="date" class="form-control" type="date">
+                    <input id="date" class="form-control" type="date" v-model="dateString">
                     <small id="date-help" class="form-text text-muted">
                         Date must be today or in the past.
                     </small>
                 </div>
 
+                <!--TIED TO HOURS IN THE SCRIPT-->
                 <div class="form-group">
                     <label class="form-label" for="hours">How many hours did you practice for?</label>
-                    <!-- TODO use v-model to connect this input to hours data -->
-                    <input id="hours" class="form-control" type="number" min="0" max="24">
+                    <!-- TODO use v-model to connect this input to hours data -> DONE WITH v-model.number which will also remove non-number related inputs -->
+                    <input id="hours" class="form-control" type="number" min="0" max="24" v-model.number="hours">
                     <small id="hours-help" class="form-text text-muted">
                         Enter a number of hours, more than 0, up to a maximum of 24
                     </small>
                 </div>
 
+                <!--TIED TO THE TYPES DROP DOWN SELECTION IN THE SCRIPT-->
                 <div class="form-group">
                     <label class="form-label" for="type">What type?</label>
                     <!-- TODO Create select element, use v-model to connect to the types -->
+
                     <!-- TODO Use v-for to create option elements, one for each type -->
+                    <select class="form-control" v-model="type">
+                        <option v-for="activityType in types">{{activityType}}</option> <!--Create one drop down selection for each option in types array-->
+                    </select>
                 </div>
 
                 <div class="form-label pb-2">
-                    What media?
+                    Form of Echo Returned from Void?
                 </div>
 
                 <div class="form-check-inline">
-                    <!-- TODO v-model media -->
-                    <input id="media1" class="form-check-input" type="radio">
-                    <label class="form-check-label" for="media1">  <!--TODO Display text -->  </label>
+                    <!-- TODO v-model media -> DONE with v-model="medium"-->
+                    <input id="media1" class="form-check-input" type="radio" value="Booming" v-model="medium">
+                    <label class="form-check-label" for="media1"><!--TODO Display text -> Set static value 'Booming' and then added value in the above line -->Booming</label>
                 </div>
 
                 <div class="form-check-inline">
-                    <!-- TODO v-model media -->
-                    <input id="media2" class="form-check-input" type="radio">
-                    <label class="form-check-label" for="media2">  <!-- TODO Display text -->  </label>
+                    <!-- TODO v-model media -> DONE with v-model="medium"-->
+                    <input id="media2" class="form-check-input" type="radio" value="Whisper" v-model="medium">
+                    <label class="form-check-label" for="media2"><!-- TODO Display text -->Whisper</label>
                 </div>
 
                 <div>
                     <!-- TODO Add v-on:click -->
-                    <button class="btn btn-primary mt-2" type="button">Add record</button>
+                    <button class="btn btn-primary mt-2" type="button" v-on:click="submit">Add record</button>
                 </div>
                 
             </div>
@@ -80,17 +90,23 @@
 
             <div class="card-body">
 
-                <h3> <!-- TODO Display number of records --> records</h3>
+                <h3><!-- TODO Display number of records -> DONE with the right-->{{totalRecordsMessage}}</h3>
 
                 <div id="records">
                     <table class="table table-hover">
                         <tr>
                             <th>Date</th>
                             <th>How many hours?</th>
-                            <th>Type</th>
-                            <th>Media</th>
+                            <th>Type of Screaming</th>
+                            <th>Echo Returned</th>
                         </tr>
                         <!-- TODO use v-for to create one table row for each activity record -->
+                        <tr v-for="record in activityRecords">
+                            <td>{{shortDate(record.date)}}</td>
+                            <td>{{record.hours}}</td>
+                            <td>{{record.type}}</td>
+                            <td>{{record.medium}}</td>
+                        </tr>
                     </table>
                 </div>
             </div>
@@ -103,7 +119,7 @@
             <div class="card-body">
 
                 <!-- TODO add computed property to calculate the total hours -->
-                <p>You have practiced a total of <!-- TODO display total hours --> hours</p>
+                <p>You have practiced a total of <!-- TODO display total hours --> {{totalHoursMessage}} hours</p>
 
                 <!-- Challenge question! Display a list of the total hours for each type.  -->
           
@@ -115,6 +131,106 @@
     <script>
 
     //   TODO create new Vue app here
+
+    let app = Vue.createApp({
+        data() {
+            return {
+                activity: 'Screaming Into Void', //went with this early on and adjusted the rest of the app as I went : )
+
+                //below is empty array of where the record will be stored from inputs
+                activityRecords: [],
+
+                // to be v-modeled to the form inputs
+                dateString: '',
+                hours: '',
+                type: '',
+                medium: '',
+
+                //create an array of all types used in drop down
+                types: ['Poetic', 'Unintelligible', 'Ominous'],
+
+                //for validation:
+                errors: []
+            }
+        },
+        methods: {
+            submit() {
+
+                //assuming there are no errors or resetting to resolve errors:
+                this.errors = []
+
+                //needs to use data to create an activity object record to be added to the array
+                let date = new Date(this.dateString)
+
+                // is the date valid? should be in the past...
+                // if there is no date or date is an Invalid Date or date selected is larger (in the future) from new Date
+                if (!this.dateString || this.dateString === 'Invalid Date' || date > new Date() ) {
+                    this.errors.push('Screaming must be in the past and must be valid.')
+                }
+
+                //is the number of hours valid? should be more than 0 and less than 24...
+                if (this.hours <= 0 || this.hours > 24) {
+                    this.errors.push('Please use a valid number of hours in an Earth day between 0 and 24')
+                }
+
+                //has type been selected?
+                if (!this.type) {
+                    this.errors.push('How you screamin?')
+                }
+
+                //has medium of echo been selected?
+                if (!this.medium) {
+                    this.errors.push('In what decibel did the void respond?')
+                }
+
+                //check the errors array again, has something been added? if so display message and stop moving forward until fixed
+                if (this.errors.length === 0) {
+                    let record = {
+                        date: date,
+                        hours: this.hours,
+                        type: this.type,
+                        medium: this.medium
+                    }
+                this.activityRecords.push(record) //add the record created from inputs
+
+                //sort the activity records by date:
+                // Javascript will call this function on every pair of records (r1 and r2) and sort them apropriately with most recent at the end
+                this.activityRecords.sort(function(r1, r2) {
+                    return r1.date.getTime() - r2.date.getTime()
+                    //getTime converts the date into a number of seconds since 01/01/1970
+                })
+
+                }
+            },
+            //this will convert date to a standard English US date format:
+            shortDate(date) {
+                return new Intl.DateTimeFormat('en-US', {timeZone: 'UTC'}).format(date)
+            }
+        },
+        computed: {
+            //will use this to display the total number of records
+            totalRecordsMessage() {
+
+                let numberOfRecords = this.activityRecords.length
+
+                if (numberOfRecords === 1) {
+                    return "1 record"
+                } else {
+                   return (`${numberOfRecords} records`)
+                }
+            },
+            //will use this to display total number of hours by cycling through and adding each number of hours in each record
+            totalHoursMessage() {
+                let total = 0
+                this.activityRecords.forEach(function(record) {
+                    total = total + record.hours
+                })
+                return total
+            }
+        }
+    })
+
+    app.mount('#app')
 
     </script>
 

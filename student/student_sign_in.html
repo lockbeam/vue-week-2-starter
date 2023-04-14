@@ -10,10 +10,16 @@
 </head>
 
 <body>
-    <div id="app">
+    <div id="app" v-cloak>
+        <!--cloak is hiding this div until the rest of the page loads, using css style sheet too!-->
 
 
-        <!-- TODO show errors from form validation -->
+        <!-- show errors from form validation -->
+        <div class="alert alert-danger" v-if="errors.length > 0">
+            <ul>
+                <li v-for="error in errors">{{error}}</li>
+            </ul>
+        </div>
 
 
         <div class="card add-student m-2 p-2">
@@ -21,16 +27,16 @@
 
             <div class="form-group">
                 <label for="name">Name</label>
-                <!-- TODO v-model newStudentName -->
-                <input id="name" class="form-control">
+                <!-- v-model newStudentName -->
+                <input id="name" class="form-control" v-model.trim="newStudentName">
             </div>
             <div class="form-group">
                 <label for="starID">Star ID</label>
-                <!-- TODO v-model newStarID -->
-                <input id="starID" class="form-control">
+                <!-- v-model newStarID -->
+                <input id="starID" class="form-control" v-model.trim="newStarID">
             </div>
-            <!-- TODO v-on:click event handler -->
-            <button class="btn btn-primary">Add</button>
+            <!-- v-on:click event handler -->
+            <button class="btn btn-primary" v-on:click="addStudent">Add</button>
         </div>
 
         <div class="card student-list m-2 p-2">
@@ -47,21 +53,111 @@
                    Each row will have a checkbox, bound to the app's data 
                    When the checkbox is checked/unchecked, the student will be signed in/out -->
 
+                    <tr v-for="student in students" v-bind:class=" {present: student.present, absent: !student.present} " >
+                        <!--bind is often used to setting HTML on an element, in this case the class element-->
+                        <!--present is asking should the present style be applied? YES IF student.present is true-->
+                        <!--absent is asking should the absent style be applied? YES IF not (the !) student.present, basically if student.present is anything but true-->
+                        <td>{{student.name}}</td>
+                        <td>{{student.starID}}</td>
+                        <td>
+                            <input type="checkbox" v-model="student.present" v-on:change="arrivedOrLeft(student)">
+                        </td>
+                    </tr>
+
                 </table>
             </div>
         </div>
 
 
         <!-- TODO show a message when student arrives or leaves  -->
-
+        <div v-if="mostRecentStudent.name"> <!--creating a 'is there something here? if not just ignore it' situation-->
+            <div class = "alert alert-success" v-if="mostRecentStudent.present"> <!--if the student is selected as present-->
+                Welcome, {{mostRecentStudent.name}}
+            </div>
+            <div class = "alert alert-dark" v-else> <!--just need an else condition because if they aren't arriving they must be leaving-->
+                So long for now {{mostRecentStudent.name}}
+            </div>
+        </div>
 
     </div>
 
     <script>
 
 
-        // TODO Vue app     
+        // TODO Vue app
+        let app = Vue.createApp({
+            data() {
+                return {
+                    newStudentName: '',
+                    newStarID: '',
+                    students: [
+                        {name: 'A. Student', starID: 'aa1234bb', present: false},
+                        {name: 'B. Student', starID: 'cc1234dd', present: false},
+                        {name: 'C. Student', starID: 'ee1234ff', present: false},
+                    ],
+                    errors: [],
+                    mostRecentStudent: {} // for the most recent change in arrival or leaving
+                }
+            },
+            methods: {
+                addStudent() {
 
+                    this.errors = [] //clears any errors
+
+                    if (!this.newStudentName) {
+                        this.errors.push("Hey you missed the student's name")
+                    }
+
+                    if (!this.newStarID) {
+                        this.errors.push("Please assign a starID to your human")
+                    }
+
+                    if (this.errors.length == 0) {
+                        let student = {name: this.newStudentName, starID: this.newStarID, present: false}
+                        this.students.push(student)
+                        this.newStudentName = ''
+                        this.newStarID = ''
+
+                        this.students.sort(function(s1, s2) {
+                            // return positive number if s1 should be sorted alphabetically after s2
+                            if (s1.name.toUpperCase() > s2.name.toUpperCase()) {
+                                return 1
+                            }
+
+                            if (s1.name.toUpperCase() < s2.name.toUpperCase()) {
+                                return -1
+                            }
+
+                            //added toUpperCase because the lowercase is sorted AFTER unicode in computer speak
+                            //so without .toUpperCase a list might loook like:
+                            // Alice
+                            // Bob
+                            // Carol
+                            // Frank
+                            // betty
+                            // diane
+                            // gustof
+
+
+                            return 0
+                            //if students had same name could then build a sort by starID - optional here
+
+                            // return negative number if s1 should be sorted before s2
+                            // return 0 if order is equivalent
+                        })
+                    }   // take the input data (if there is any), assign them to proper categories, push to aray, and then clear inputs
+
+                
+                
+
+                },
+                arrivedOrLeft(student) {
+                    this.mostRecentStudent = student
+                }
+            }
+        })     
+
+        app.mount('#app')
 
     </script>
 
